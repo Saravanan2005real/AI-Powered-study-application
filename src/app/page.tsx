@@ -7,14 +7,30 @@ import QuickActions from "@/components/QuickActions";
 import ChatInput from "@/components/ChatInput";
 import StudentForm from "@/components/StudentForm";
 import DocumentViewer from "@/components/DocumentViewer";
+import CinematicLoader from "@/components/CinematicLoader";
+import RightPanel from "@/components/RightPanel";
+
+interface StudentData {
+  name: string;
+  grade: string;
+  subject: string;
+  goal: string;
+  question: string;
+}
 
 export default function Home() {
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [studentData, setStudentData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [showPracticeTest, setShowPracticeTest] = useState(false);
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = (data: StudentData) => {
     setStudentData(data);
+    setIsLoading(true);
+  };
+
+  const handleLoaderComplete = () => {
+    setIsLoading(false);
     setIsFormSubmitted(true);
   };
 
@@ -22,12 +38,24 @@ export default function Home() {
     setShowPracticeTest(true);
   };
 
-  if (!isFormSubmitted) {
+  if (!isFormSubmitted && !isLoading) {
     return (
-      <div className="flex h-screen bg-background overflow-hidden selection:bg-primary-400/30 selection:text-primary-400">
-        <StudentForm onSubmit={handleFormSubmit} />
+      <div className="flex flex-col lg:flex-row h-screen bg-background overflow-y-auto lg:overflow-hidden selection:bg-primary-400/30 selection:text-primary-400">
+        {/* Left Side: Form */}
+        <div className="w-full lg:w-1/2 min-h-screen lg:min-h-0 lg:h-full flex flex-col border-b lg:border-b-0 lg:border-r border-[#3d3b38] overflow-y-auto custom-scrollbar">
+          <StudentForm onSubmit={handleFormSubmit} />
+        </div>
+        
+        {/* Right Side: Content Area */}
+        <div className="w-full lg:w-1/2 min-h-screen lg:min-h-0 lg:h-full bg-[#1c1b1a]">
+          <RightPanel />
+        </div>
       </div>
     );
+  }
+
+  if (isLoading) {
+    return <CinematicLoader onComplete={handleLoaderComplete} />;
   }
 
   return (
@@ -124,7 +152,7 @@ export default function Home() {
         </div>
 
         {/* Right Side: Document Viewer (Hidden on small screens) */}
-        <div className="hidden lg:block lg:w-1/3 xl:w-2/5 flex-shrink-0 h-full">
+        <div className="hidden lg:block lg:w-1/4 xl:w-1/4 flex-shrink-0 h-full">
           <DocumentViewer />
         </div>
 

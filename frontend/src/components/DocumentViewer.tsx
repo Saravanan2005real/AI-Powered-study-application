@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function DocumentViewer() {
-  const [isUploaded, setIsUploaded] = useState(false);
+  const { isUploaded, setIsUploaded } = useAppContext();
 
   return (
     <div className="flex-1 h-full bg-[#1c1b1a] border-l border-[#3d3b38] flex flex-col animate-fade-in relative overflow-hidden">
@@ -15,7 +16,10 @@ export default function DocumentViewer() {
           </svg>
           Study Material
         </h3>
-        <button className="text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors bg-primary-400/10 px-3 py-1.5 rounded-full border border-primary-400/20">
+        <button 
+          onClick={() => setIsUploaded(false)}
+          className="text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors bg-primary-400/10 px-3 py-1.5 rounded-full border border-primary-400/20"
+        >
           Upload New
         </button>
       </div>

@@ -1,60 +1,50 @@
-import { prisma } from '@/lib/prisma';
-
 export class AIService {
-  private static apiKey = process.env.GROQ_API_KEY || '';
-  private static baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  static async sendMessage(messages: { role: string; content: string }[], systemPrompt?: string) {
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, systemPrompt })
+      });
 
-  static async generateResponse(chatSessionId: string, userMessage: string) {
-    // Fetch previous context
-    const messages = await prisma.message.findMany({
-      where: { chatSessionId },
-      orderBy: { createdAt: 'asc' },
-      take: 10
-    });
+      const data = await response.json();
 
-    let aiText = '';
-
-    if (!this.apiKey || this.apiKey === 'your_groq_api_key_here') {
-      aiText = `I understand you want to learn about "${userMessage}". This is a placeholder response that will be replaced when Groq API integration is configured.`;
-    } else {
-      try {
-        const response = await fetch(this.baseUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama3-8b-8192',
-            messages: [
-              { role: 'system', content: 'You are an educational AI assistant named EduGenie.' },
-              ...messages.map(m => ({ role: m.role, content: m.content })),
-              { role: 'user', content: userMessage }
-            ],
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Groq API Error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        aiText = data.choices[0].message.content;
-      } catch (error) {
-        console.error('Error generating Groq response:', error);
-        aiText = "Sorry, I'm having trouble connecting to my AI brain right now.";
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to communicate with AI");
       }
+
+      return data.content;
+    } catch (error: any) {
+      console.error("AIService Error:", error);
+      throw new Error(error.message || "An unexpected error occurred");
     }
+  }
 
-    // Save AI response
-    const aiMessage = await prisma.message.create({
-      data: {
-        chatSessionId,
-        role: 'ai',
-        content: aiText
+  static async generatePracticeTest(subject: string, goal: string) {
+    const prompt = `Generate a 3-question multiple choice practice test for a student studying "${subject}" with the goal to "${goal}". 
+Return ONLY a valid JSON array of objects with the exact following structure:
+[
+  {
+    "question": "Question text here",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": 0
+  }
+]
+No markdown wrapping, no explanation, just the raw JSON array.`;
+
+    try {
+      const result = await this.sendMessage([{ role: "user", content: prompt }]);
+      
+      // Attempt to parse the JSON
+      try {
+        const jsonMatch = result.match(/\[[\s\S]*\]/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : result;
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        throw new Error("AI returned malformed test data.");
       }
-    });
-
-    return aiMessage;
+    } catch (error: any) {
+      throw error;
+    }
   }
 }

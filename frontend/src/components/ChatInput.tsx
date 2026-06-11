@@ -8,7 +8,7 @@ export default function ChatInput() {
   const [answerType, setAnswerType] = useState<"text" | "audio">("text");
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const { addMessage, chats, activeChatId, studentData } = useAppContext();
+  const { addMessage, studentData } = useAppContext();
 
   const handleSend = async () => {
     if (!input.trim() || isGenerating) return;
@@ -19,19 +19,18 @@ export default function ChatInput() {
     setIsGenerating(true);
 
     try {
-      // Find current chat to build history
-      const activeChat = chats.find(c => c.id === activeChatId);
-      const history = activeChat ? activeChat.messages.map(m => ({ role: m.role, content: m.content })) : [];
+      // Pass the user context inside the message string
+      const contextPrefix = studentData?.name ? `I am ${studentData.name}. ` : "";
+      const goalPrefix = studentData?.goal ? `My study goal is ${studentData.goal}. ` : "";
+      const fullMessage = `${contextPrefix}${goalPrefix}${userText}`;
       
-      const systemPrompt = `You are EduGenie, an AI study assistant. The student is named ${studentData?.name || 'Student'}. They are studying ${studentData?.subject || 'general subjects'} with the goal to ${studentData?.goal || 'learn'}. Keep answers helpful, encouraging, and structured.`;
-
-      // The new message is already in AppContext, but we need to send it directly since state might not have updated yet
-      const messagesToSend = [...history, { role: "user", content: userText }];
-      
-      const aiResponse = await AIService.sendMessage(messagesToSend, systemPrompt);
-      addMessage(aiResponse, "ai");
+      const aiResponse = await AIService.sendMessage(fullMessage);
+      if (aiResponse) {
+        addMessage(aiResponse, "ai");
+      }
     } catch (error: any) {
-      addMessage(`Error: ${error.message || "Failed to generate AI response. Is your Groq API key valid?"}`, "ai");
+      console.error("Chat Error:", error);
+      addMessage(`Error: ${error.message || "Failed to generate AI response. Please try again."}`, "ai");
     } finally {
       setIsGenerating(false);
     }

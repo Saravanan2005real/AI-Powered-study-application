@@ -2,19 +2,21 @@
   "name": "edugenie-backend",
   "version": "1.0.0",
   "description": "Edugenie Backend with Express and Prisma",
-  "main": "dist/server.js",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "groq-sdk": "^1.2.1",
     "jose": "^6.2.3",
     "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.1.14",
     "zod": "^3.23.8"
   },
   "devDependencies": {

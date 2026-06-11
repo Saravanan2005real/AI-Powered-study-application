@@ -5,12 +5,16 @@ import { getProgress, updateProgress } from '../controllers/progress.controller'
 import { getSettings, updateSettings, clearHistory } from '../controllers/settings.controller';
 import { getTests, createTest, evaluateTest } from '../controllers/test.controller';
 import { getMaterials, createMaterial, upload } from '../controllers/material.controller';
+import chatRoute from './chat';
 
 const router = Router();
 
 // Health/Test
-router.get('/health', (req, res) => res.json({ status: 'ok', message: 'Backend is healthy' }));
-router.get('/test', (req, res) => res.json({ status: 'ok', message: 'Test route is working' }));
+router.get('/health', (req, res) => { res.json({ status: 'ok', message: 'Backend is healthy' }); });
+router.get('/test', (req, res) => { res.json({ status: 'ok', message: 'Test route is working' }); });
+
+// Direct Chat API Route
+router.use('/chat', chatRoute);
 
 // Chats
 router.get('/chats', getChats);

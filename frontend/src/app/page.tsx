@@ -37,8 +37,10 @@ export default function Home() {
       if (studentData?.question) {
         addMessage(studentData.question, "user");
         try {
-          const systemPrompt = `You are EduGenie, an AI study assistant. The student is named ${studentData?.name || 'Student'}. They are studying ${studentData?.subject || 'general subjects'} with the goal to ${studentData?.goal || 'learn'}. Keep answers helpful, encouraging, and structured.`;
-          const aiResponse = await AIService.sendMessage([{ role: "user", content: studentData.question }], systemPrompt);
+          const contextPrefix = studentData?.name ? `I am ${studentData.name}. ` : "";
+          const goalPrefix = studentData?.goal ? `My study goal is ${studentData.goal}. ` : "";
+          const fullMessage = `${contextPrefix}${goalPrefix}${studentData.question}`;
+          const aiResponse = await AIService.sendMessage(fullMessage);
           addMessage(aiResponse, "ai");
         } catch (error: any) {
           addMessage(`Error: ${error.message || "Failed to generate AI response. Is your Groq API key valid?"}`, "ai");

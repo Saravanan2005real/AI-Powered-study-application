@@ -1,22 +1,25 @@
+import axios from "axios";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 export class AIService {
-  static async sendMessage(messages: { role: string; content: string }[], systemPrompt?: string) {
+  static async sendMessage(message: string) {
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      console.log("Sending message to backend AI service...", { API_URL, message });
+      const response = await axios.post(`${API_URL}/api/chat`, {
+        message
+      }, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, systemPrompt })
+        timeout: 30000 // Timeout handling
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to communicate with AI");
-      }
-
-      return data.content;
+      return response.data.content;
     } catch (error: any) {
       console.error("AIService Error:", error);
-      throw new Error(error.message || "An unexpected error occurred");
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error("Unauthorized: Please check your API credentials.");
+      }
+      throw new Error(error.response?.data?.error || error.message || "An unexpected error occurred in AI Service");
     }
   }
 
@@ -33,9 +36,8 @@ Return ONLY a valid JSON array of objects with the exact following structure:
 No markdown wrapping, no explanation, just the raw JSON array.`;
 
     try {
-      const result = await this.sendMessage([{ role: "user", content: prompt }]);
+      const result = await this.sendMessage(prompt);
       
-      // Attempt to parse the JSON
       try {
         const jsonMatch = result.match(/\[[\s\S]*\]/);
         const jsonStr = jsonMatch ? jsonMatch[0] : result;

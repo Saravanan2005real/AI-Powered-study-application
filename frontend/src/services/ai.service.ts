@@ -3,11 +3,12 @@ import axios from "axios";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export class AIService {
-  static async sendMessage(message: string) {
+  static async sendMessage(message: string, chatId?: string | null) {
     try {
-      console.log("Sending message to backend AI service...", { API_URL, message });
+      console.log("Sending message to backend AI service...", { API_URL, message, chatId });
       const response = await axios.post(`${API_URL}/api/chat`, {
-        message
+        message,
+        chatId
       }, {
         headers: { "Content-Type": "application/json" },
         timeout: 30000 // Timeout handling

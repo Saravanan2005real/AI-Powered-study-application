@@ -9,7 +9,9 @@ export default function ChatInput() {
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const { addMessage, studentData } = useAppContext();
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = React.useRef<any>(null);
+  const { addMessage, studentData, activeChatId } = useAppContext();
 
   const speak = (text: string) => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -21,33 +23,59 @@ export default function ChatInput() {
   };
 
   const startRecording = () => {
+    if (isRecording || isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsRecording(false);
+      setIsListening(false);
+      return;
+    }
+
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Speech Recognition API is not supported in this browser.");
+        alert("Speech Recognition API is not supported in this browser. Please use Chrome, Edge, or Brave.");
         return;
       }
       
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+      try {
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
 
-      recognition.onstart = () => setIsRecording(true);
-      
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(prev => prev ? `${prev} ${transcript}` : transcript);
-      };
+        recognition.onstart = () => {
+          setIsRecording(true);
+          setIsListening(true);
+        };
+        
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(prev => prev ? `${prev} ${transcript}` : transcript);
+          setIsListening(false);
+        };
 
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
+        recognition.onerror = (event: any) => {
+          if (event.error !== 'aborted' && event.error !== 'no-speech') {
+            console.error("Speech recognition error:", event.error);
+          }
+          setIsRecording(false);
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+          setIsListening(false);
+        };
+
+        recognition.start();
+      } catch (error) {
+        console.error("Failed to start speech recognition:", error);
         setIsRecording(false);
-      };
-
-      recognition.onend = () => setIsRecording(false);
-
-      recognition.start();
+        setIsListening(false);
+      }
     }
   };
 
@@ -65,7 +93,7 @@ export default function ChatInput() {
       const goalPrefix = studentData?.goal ? `My study goal is ${studentData.goal}. ` : "";
       const fullMessage = `${contextPrefix}${goalPrefix}${userText}`;
       
-      const aiResponse = await AIService.sendMessage(fullMessage);
+      const aiResponse = await AIService.sendMessage(fullMessage, activeChatId);
       if (aiResponse) {
         addMessage(aiResponse, "ai");
         if (answerType === "audio") {
@@ -101,7 +129,9 @@ export default function ChatInput() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
             </div>
-            <span className="font-medium tracking-wide">{isRecording ? "Recording..." : "Record Voice Note"}</span>
+            <span className="font-medium tracking-wide">
+              {isListening ? "Listening..." : isRecording ? "Processing..." : "Record Voice Note"}
+            </span>
           </button>
           
           <div className="flex items-center gap-6">

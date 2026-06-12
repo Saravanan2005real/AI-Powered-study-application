@@ -19,8 +19,11 @@ import SettingsPanel from "@/components/SettingsPanel";
 
 export default function Home() {
   const { studentData, setStudentData, activeView, chats, activeChatId, addMessage, setActiveView, isUploaded, isLoaded } = useAppContext();
-  const [isFormSubmitted, setIsFormSubmitted] = useState(!!studentData);
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // We intentionally do not auto-skip the form so the user can see the Home/About pages
+  // and the Cinematic Loader upon submission.
 
   const activeChat = chats.find(c => c.id === activeChatId);
 
@@ -34,33 +37,45 @@ export default function Home() {
     setIsFormSubmitted(true);
     // Auto-create initial chat if none exists
     if (!activeChatId) {
+      const newChatId = Date.now().toString();
+      
       if (studentData?.question) {
+        // Send user's initial question
         addMessage(studentData.question, "user");
         try {
           const contextPrefix = studentData?.name ? `I am ${studentData.name}. ` : "";
           const goalPrefix = studentData?.goal ? `My study goal is ${studentData.goal}. ` : "";
           const fullMessage = `${contextPrefix}${goalPrefix}${studentData.question}`;
-          const aiResponse = await AIService.sendMessage(fullMessage);
+          // Even though activeChatId is null in this render, addMessage will create a chat using Date.now().
+          // We don't have the exact ID here synchronously, but sending without it is fine for the first message context.
+          const aiResponse = await AIService.sendMessage(fullMessage, undefined);
           addMessage(aiResponse, "ai");
         } catch (error: any) {
           addMessage(`Error: ${error.message || "Failed to generate AI response. Is your Groq API key valid?"}`, "ai");
         }
+      } else {
+        addMessage("Started a new session", "user");
       }
     }
   };
 
   if (!isLoaded) {
-    return <div className="h-screen w-full bg-background flex items-center justify-center text-primary-400">Loading EduGenie...</div>;
+    return (
+      <div className="h-screen w-full bg-background flex flex-col items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-4 border-primary-400/20 border-t-primary-400 animate-spin mb-4"></div>
+        <div className="text-primary-400 font-medium animate-pulse">Initializing EduGenie...</div>
+      </div>
+    );
   }
 
-  if (!isFormSubmitted && !isLoading && !studentData) {
+  if (!isFormSubmitted && !isLoading) {
     return (
-      <div className="flex flex-col lg:flex-row h-screen bg-background overflow-y-auto lg:overflow-hidden selection:bg-primary-400/30 selection:text-primary-400">
-        <div className="w-full lg:w-1/2 min-h-screen lg:min-h-0 lg:h-full flex flex-col border-b lg:border-b-0 lg:border-r border-[#3d3b38] overflow-y-auto custom-scrollbar">
-          <StudentForm onSubmit={handleFormSubmit} />
+      <div className="flex flex-col lg:flex-row flex-1 h-screen w-full bg-background overflow-hidden selection:bg-primary-400/30 selection:text-primary-400">
+        <div className="w-full lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-[#3d3b38] overflow-y-auto custom-scrollbar">
+          <StudentForm onSubmit={handleFormSubmit} initialData={studentData} />
         </div>
         
-        <div className="w-full lg:w-1/2 min-h-screen lg:min-h-0 lg:h-full bg-[#1c1b1a]">
+        <div className="w-full lg:w-1/2 flex-1 bg-[#1c1b1a] overflow-hidden">
           <RightPanel />
         </div>
       </div>

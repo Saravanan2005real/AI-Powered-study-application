@@ -4,15 +4,16 @@ import React, { useState } from "react";
 
 interface StudentFormProps {
   onSubmit: (data: { name: string; grade: string; subject: string; goal: string; question: string }) => void;
+  initialData?: any;
 }
 
-export default function StudentForm({ onSubmit }: StudentFormProps) {
+export default function StudentForm({ onSubmit, initialData }: StudentFormProps) {
   const [formData, setFormData] = useState({
-    name: "",
-    grade: "",
-    subject: "",
-    goal: "",
-    question: ""
+    name: initialData?.name || "",
+    grade: initialData?.grade || "",
+    subject: initialData?.subject || "",
+    goal: initialData?.goal || "",
+    question: initialData?.question || ""
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -28,8 +29,8 @@ export default function StudentForm({ onSubmit }: StudentFormProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[100dvh] py-6 px-4 sm:px-6 lg:px-8 animate-fade-in w-full">
-      <div className="w-full max-w-md luxury-card p-6 sm:p-8 max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col relative pb-8">
+    <div className="flex flex-col items-center justify-center flex-1 py-6 px-4 sm:px-6 lg:px-8 animate-fade-in w-full h-full min-h-0">
+      <div className="w-full max-w-md luxury-card p-6 sm:p-8 flex flex-col relative">
         <div className="text-center shrink-0">
           <div className="mx-auto w-12 h-12 bg-primary-600/20 text-primary-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-primary-400/30">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -115,7 +116,7 @@ export default function StudentForm({ onSubmit }: StudentFormProps) {
             </div>
           </div>
 
-          <div className="pt-2 sticky bottom-0 z-10 pb-1">
+          <div className="pt-4">
             <button
               type="submit"
               className="group relative w-full flex justify-center items-center h-[56px] px-4 border border-transparent text-base font-bold rounded-xl text-[#141413] bg-gradient-to-r from-[#D4AF37] via-[#FFDF73] to-[#D4AF37] bg-[length:200%_auto] hover:bg-right focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D4AF37] focus:ring-offset-[#1c1b1a] transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_30px_rgba(212,175,55,0.7)]"

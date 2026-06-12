@@ -8,7 +8,48 @@ export default function ChatInput() {
   const [answerType, setAnswerType] = useState<"text" | "audio">("text");
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const { addMessage, studentData } = useAppContext();
+
+  const speak = (text: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const startRecording = () => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech Recognition API is not supported in this browser.");
+        return;
+      }
+      
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => setIsRecording(true);
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => prev ? `${prev} ${transcript}` : transcript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => setIsRecording(false);
+
+      recognition.start();
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isGenerating) return;
@@ -27,6 +68,9 @@ export default function ChatInput() {
       const aiResponse = await AIService.sendMessage(fullMessage);
       if (aiResponse) {
         addMessage(aiResponse, "ai");
+        if (answerType === "audio") {
+          speak(aiResponse);
+        }
       }
     } catch (error: any) {
       console.error("Chat Error:", error);
@@ -48,13 +92,16 @@ export default function ChatInput() {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col gap-3 mb-3 px-2">
           {/* Mic Button added above Text Answer */}
-          <button className="flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300 transition-colors w-fit group">
-            <div className="p-2 rounded-full bg-primary-400/10 group-hover:bg-primary-400/20 border border-primary-400/20 transition-colors">
+          <button 
+            onClick={startRecording}
+            className={`flex items-center gap-2 text-sm transition-colors w-fit group ${isRecording ? 'text-red-500 hover:text-red-400' : 'text-primary-400 hover:text-primary-300'}`}
+          >
+            <div className={`p-2 rounded-full transition-colors ${isRecording ? 'bg-red-500/20 border border-red-500/30 animate-pulse' : 'bg-primary-400/10 group-hover:bg-primary-400/20 border border-primary-400/20'}`}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
             </div>
-            <span className="font-medium tracking-wide">Record Voice Note</span>
+            <span className="font-medium tracking-wide">{isRecording ? "Recording..." : "Record Voice Note"}</span>
           </button>
           
           <div className="flex items-center gap-6">

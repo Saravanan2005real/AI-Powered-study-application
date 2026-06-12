@@ -14,6 +14,7 @@ export type ChatSession = {
   title: string;
   messages: Message[];
   updatedAt: number;
+  files?: { name: string; type: string; size: number }[];
 };
 
 export type Goal = {
@@ -64,6 +65,9 @@ export type AppContextType = {
 
   isUploaded: boolean;
   setIsUploaded: (val: boolean) => void;
+  uploadedFiles: { name: string; type: string; size: number }[];
+  uploadFiles: (files: FileList | File[]) => void;
+  isLoaded: boolean;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -81,7 +85,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [completedTests, setCompletedTestsState] = useState(0);
   
   const [settings, setSettingsState] = useState<Settings>({ language: "English", learningLevel: "Intermediate" });
-  const [isUploaded, setIsUploaded] = useState(false);
+  const [isUploaded, setIsUploadedState] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; type: string; size: number }[]>([]);
 
   // Load from StorageService on mount
   useEffect(() => {
@@ -89,7 +94,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     const storedChats = StorageService.getChats();
     setChatsState(storedChats);
-    if (storedChats.length > 0) setActiveChatId(storedChats[0].id);
+    if (storedChats.length > 0) {
+      setActiveChatId(storedChats[0].id);
+    }
 
     setGoalsState(StorageService.getGoals());
 
@@ -100,6 +107,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettingsState(StorageService.getSettings());
     setIsLoaded(true);
   }, []);
+
+  // Sync uploaded files when active chat changes
+  useEffect(() => {
+    if (activeChatId) {
+      const chat = chats.find(c => c.id === activeChatId);
+      if (chat && chat.files && chat.files.length > 0) {
+        setUploadedFiles(chat.files);
+        setIsUploadedState(true);
+      } else {
+        setUploadedFiles([]);
+        setIsUploadedState(false);
+      }
+    }
+  }, [activeChatId, chats]);
 
   const setStudentData = (data: StudentData) => {
     setStudentDataState(data);
@@ -112,6 +133,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       StorageService.setChats(updated);
       return updated;
     });
+  };
+
+  const setIsUploaded = (val: boolean) => {
+    setIsUploadedState(val);
+    if (!val) {
+      setUploadedFiles([]);
+      if (activeChatId) {
+        setChats(prev => prev.map(c => c.id === activeChatId ? { ...c, files: [] } : c));
+      }
+    }
+  };
+
+  const uploadFiles = (files: FileList | File[]) => {
+    const fileArray = Array.from(files).map(f => ({ name: f.name, type: f.type, size: f.size }));
+    setUploadedFiles(fileArray);
+    setIsUploadedState(true);
+    if (activeChatId) {
+      setChats(prev => prev.map(c => c.id === activeChatId ? { ...c, files: fileArray } : c));
+    }
   };
 
   const setGoals = (newGoals: Goal[] | ((prev: Goal[]) => Goal[])) => {
@@ -152,10 +192,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: "New Session",
       messages: [],
       updatedAt: Date.now(),
+      files: []
     };
     setChats(prev => [newChat, ...prev]);
     setActiveChatId(newChat.id);
     setActiveView("chat");
+    setUploadedFiles([]);
+    setIsUploadedState(false);
   };
 
   const addMessage = (content: string, role: "user" | "ai") => {
@@ -165,7 +208,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: Date.now().toString(),
         title: content.substring(0, 20) + "...",
         messages: [{ id: Date.now().toString() + role, role, content }],
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        files: uploadedFiles
       };
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
@@ -208,6 +252,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setGoals([]);
     setStudyHoursState(0);
     setCompletedTestsState(0);
+    setUploadedFiles([]);
+    setIsUploadedState(false);
     StorageService.clearHistory();
   };
 
@@ -225,7 +271,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       goals, addGoal, toggleGoal,
       studyHours, addStudyHour, completedTests, addCompletedTest,
       settings, updateSettings, clearHistory, logout,
-      isUploaded, setIsUploaded
+      isUploaded, setIsUploaded, uploadedFiles, uploadFiles, isLoaded
     }}>
       {children}
     </AppContext.Provider>

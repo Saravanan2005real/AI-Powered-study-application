@@ -1,10 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { useAppContext } from "@/context/AppContext";
 
 export default function DocumentViewer() {
-  const { isUploaded, setIsUploaded } = useAppContext();
+  const { isUploaded, setIsUploaded, uploadFiles, uploadedFiles } = useAppContext();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadFiles(e.target.files);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      uploadFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
   return (
     <div className="flex-1 h-full bg-[#1c1b1a] border-l border-[#3d3b38] flex flex-col animate-fade-in relative overflow-hidden">
@@ -20,14 +36,29 @@ export default function DocumentViewer() {
           onClick={() => setIsUploaded(false)}
           className="text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors bg-primary-400/10 px-3 py-1.5 rounded-full border border-primary-400/20"
         >
-          Upload New
+          {isUploaded ? "Clear Files" : "Upload New"}
         </button>
       </div>
+
+      {/* Hidden File Input */}
+      <input 
+        type="file" 
+        multiple 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+        accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+      />
 
       {/* Viewer Body */}
       <div className="flex-1 overflow-y-auto p-6 relative">
         {!isUploaded ? (
-          <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-[#3d3b38] rounded-2xl hover:border-primary-400/50 transition-colors cursor-pointer group bg-[#2D2C2A]/30">
+          <div 
+            className="h-full flex flex-col items-center justify-center border-2 border-dashed border-[#3d3b38] rounded-2xl hover:border-primary-400/50 transition-colors cursor-pointer group bg-[#2D2C2A]/30"
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
             <div className="w-16 h-16 bg-[#2D2C2A] rounded-2xl flex items-center justify-center mb-4 text-primary-400 group-hover:scale-110 transition-transform shadow-md border border-[#3d3b38]">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -39,16 +70,33 @@ export default function DocumentViewer() {
             </p>
             <button 
               className="mt-6 bg-[#3d3b38] hover:bg-[#4a4845] text-foreground px-6 py-2.5 rounded-xl font-medium transition-colors border border-[#4a4845]"
-              onClick={() => setIsUploaded(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
             >
-              Simulate Upload
+              Select Files
             </button>
           </div>
         ) : (
           <div className="w-full min-h-[800px] luxury-card p-8 flex flex-col animate-fade-in relative">
             <div className="absolute top-4 right-4 flex gap-2">
-              <span className="animate-pulse-soft bg-primary-400/20 text-primary-400 text-xs px-2 py-1 rounded-md border border-primary-400/30 font-medium">Processing Context...</span>
+              <span className="animate-pulse-soft bg-primary-400/20 text-primary-400 text-xs px-2 py-1 rounded-md border border-primary-400/30 font-medium">Active Context</span>
             </div>
+            
+            {/* Real File Names Overlaid */}
+            <div className="mb-8">
+              <h4 className="text-foreground font-bold mb-3 border-b border-[#3d3b38] pb-2">Uploaded Materials</h4>
+              {uploadedFiles.map((f, i) => (
+                <div key={i} className="flex items-center gap-3 py-2 text-primary-400">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                  <span className="truncate font-medium">{f.name}</span>
+                  <span className="text-xs text-foreground-muted ml-auto">{(f.size / 1024).toFixed(1)} KB</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Simulated Document Content Background */}
             <div className="w-full h-8 bg-[#3d3b38] rounded-md mb-6 w-3/4"></div>
             <div className="w-full h-4 bg-[#3d3b38]/60 rounded-md mb-3 w-full"></div>
             <div className="w-full h-4 bg-[#3d3b38]/60 rounded-md mb-3 w-5/6"></div>

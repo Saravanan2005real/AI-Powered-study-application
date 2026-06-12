@@ -18,7 +18,7 @@ import PracticeTest from "@/components/PracticeTest";
 import SettingsPanel from "@/components/SettingsPanel";
 
 export default function Home() {
-  const { studentData, setStudentData, activeView, chats, activeChatId, addMessage, setActiveView, isUploaded } = useAppContext();
+  const { studentData, setStudentData, activeView, chats, activeChatId, addMessage, setActiveView, isUploaded, isLoaded } = useAppContext();
   const [isFormSubmitted, setIsFormSubmitted] = useState(!!studentData);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,6 +48,10 @@ export default function Home() {
       }
     }
   };
+
+  if (!isLoaded) {
+    return <div className="h-screen w-full bg-background flex items-center justify-center text-primary-400">Loading EduGenie...</div>;
+  }
 
   if (!isFormSubmitted && !isLoading && !studentData) {
     return (

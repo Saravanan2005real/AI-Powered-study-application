@@ -6,7 +6,7 @@ import { useAppContext } from "@/context/AppContext";
 
 export default function Sidebar() {
   const [showSettings, setShowSettings] = useState(false);
-  const { activeView, setActiveView, createNewChat, clearHistory, logout, updateSettings } = useAppContext();
+  const { activeView, setActiveView, createNewChat, clearHistory, logout, updateSettings, chats, activeChatId, setActiveChatId } = useAppContext();
 
   return (
     <div className="w-64 h-full bg-[#1c1b1a] border-r border-[#3d3b38] flex flex-col shadow-sm">
@@ -61,6 +61,34 @@ export default function Sidebar() {
           />
         </div>
       </div>
+
+      {/* Chat History Section */}
+      {chats.length > 0 && (
+        <div className="px-4 mt-2 mb-2 flex-shrink-0">
+          <div className="h-px bg-[#3d3b38] w-full mb-3"></div>
+          <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider mb-2 px-3">Recent Chats</h3>
+          <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+            {chats.map(chat => (
+              <button
+                key={chat.id}
+                onClick={() => {
+                  setActiveChatId(chat.id);
+                  setActiveView("chat");
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left truncate ${
+                  activeChatId === chat.id && activeView === "chat"
+                    ? "bg-[#3d3b38] text-primary-400 font-medium"
+                    : "text-foreground-muted hover:bg-[#3d3b38]/50 hover:text-foreground"
+                }`}
+                title={chat.title}
+              >
+                <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate text-sm">{chat.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bottom Section */}
       <div className="p-4 border-t border-[#3d3b38]">

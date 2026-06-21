@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 
 export default function SettingsPanel() {
-  const { studentData, setStudentData, settings, updateSettings, clearHistory, logout } = useAppContext();
+  const { studentData, setStudentData, settings, updateSettings, clearHistory, logout, setIsMobileMenuOpen } = useAppContext();
   
   const [name, setName] = useState(studentData?.name || "");
   const [grade, setGrade] = useState(studentData?.grade || "");
@@ -35,7 +35,17 @@ export default function SettingsPanel() {
   return (
     <div className="flex-1 h-full bg-[#1c1b1a] overflow-y-auto custom-scrollbar p-8 animate-fade-in relative">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-foreground mb-8">Settings & Profile</h2>
+        <div className="flex items-center gap-4 mb-8">
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden p-2 -ml-2 text-foreground-muted hover:bg-[#3d3b38] rounded-lg transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h2 className="text-2xl font-bold text-foreground">Settings & Profile</h2>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Profile Form */}

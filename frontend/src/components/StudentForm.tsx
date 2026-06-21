@@ -60,7 +60,7 @@ export default function StudentForm({ onSubmit, initialData }: StudentFormProps)
                 placeholder="e.g. John Doe"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="grade" className="block text-sm font-medium text-foreground-muted mb-1">Class / Grade</label>
                 <input

@@ -1,20 +1,32 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
+import { useAppContext } from "@/context/AppContext";
 
 export default function DeveloperPage() {
+  const { setIsMobileMenuOpen } = useAppContext();
+
   return (
     <div className="flex h-screen bg-background overflow-hidden selection:bg-primary-400/30 selection:text-primary-400">
-      {/* Sidebar - Hidden on mobile, block on md+ */}
-      <div className="hidden md:block w-64 flex-shrink-0 border-r border-[#3d3b38]">
-        <Sidebar />
-      </div>
+      <Sidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-background">
         <header className="flex-shrink-0 border-b border-[#3d3b38] bg-[#2D2C2A]/80 backdrop-blur-md px-6 py-4 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center justify-between mx-auto">
-            <h2 className="text-xl font-bold text-foreground tracking-tight">Developers</h2>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 -ml-2 text-foreground-muted hover:bg-[#3d3b38] rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h2 className="text-xl font-bold text-foreground tracking-tight">Developers</h2>
+            </div>
             <Link href="/" className="px-4 py-2 bg-[#2D2C2A] hover:bg-[#3d3b38] rounded-xl text-primary-400 font-medium transition-colors">
               Back to App
             </Link>

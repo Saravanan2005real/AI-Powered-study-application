@@ -20,14 +20,14 @@ export class ChatService {
     return chats;
   }
 
-  static async createChat(userId: string, title: string = "New Chat") {
+  static async createChat(userId: string, title: string = "New Chat", id?: string) {
     // Ensure user exists
     if (!memoryDb.users.find(u => u.id === userId)) {
       memoryDb.users.push({ id: userId, email: "student@example.com", name: "Student" });
     }
 
     const newChat = {
-      id: generateId(),
+      id: id || generateId(),
       userId,
       title,
       status: "active",
@@ -65,7 +65,20 @@ export class ChatService {
     memoryDb.messages.push(userMessage);
     chat.updatedAt = new Date();
 
-    const aiMessage = await AIService.generateResponse(chatId, content);
+    let aiMessage;
+    try {
+      aiMessage = await AIService.generateResponse(chatId, content);
+    } catch (error: any) {
+      console.error("[ChatService] AI generation failed:", error.message);
+      aiMessage = {
+        id: generateId(),
+        chatSessionId: chatId,
+        role: "assistant",
+        content: `Sorry, I encountered an error while processing your request: ${error.message}`,
+        createdAt: new Date()
+      };
+      memoryDb.messages.push(aiMessage);
+    }
 
     return {
       userMessage,

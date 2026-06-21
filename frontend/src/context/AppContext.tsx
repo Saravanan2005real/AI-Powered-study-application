@@ -14,7 +14,7 @@ export type ChatSession = {
   title: string;
   messages: Message[];
   updatedAt: number;
-  files?: { name: string; type: string; size: number }[];
+  files?: any[];
 };
 
 export type Goal = {
@@ -65,9 +65,11 @@ export type AppContextType = {
 
   isUploaded: boolean;
   setIsUploaded: (val: boolean) => void;
-  uploadedFiles: { name: string; type: string; size: number }[];
-  uploadFiles: (files: FileList | File[]) => void;
+  uploadedFiles: any[];
+  uploadFiles: (files: any[]) => void;
   isLoaded: boolean;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (val: boolean) => void;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -86,7 +88,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   
   const [settings, setSettingsState] = useState<Settings>({ language: "English", learningLevel: "Intermediate" });
   const [isUploaded, setIsUploadedState] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; type: string; size: number }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Load from StorageService on mount
   useEffect(() => {
@@ -145,8 +148,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const uploadFiles = (files: FileList | File[]) => {
-    const fileArray = Array.from(files).map(f => ({ name: f.name, type: f.type, size: f.size }));
+  const uploadFiles = (files: any[]) => {
+    const fileArray = Array.from(files).map(f => {
+      if (f instanceof File) {
+        return { name: f.name, type: f.type, size: f.size };
+      }
+      return f;
+    });
     setUploadedFiles(fileArray);
     setIsUploadedState(true);
     if (activeChatId) {
@@ -271,7 +279,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       goals, addGoal, toggleGoal,
       studyHours, addStudyHour, completedTests, addCompletedTest,
       settings, updateSettings, clearHistory, logout,
-      isUploaded, setIsUploaded, uploadedFiles, uploadFiles, isLoaded
+      isUploaded, setIsUploaded, uploadedFiles, uploadFiles, isLoaded,
+      isMobileMenuOpen, setIsMobileMenuOpen
     }}>
       {children}
     </AppContext.Provider>

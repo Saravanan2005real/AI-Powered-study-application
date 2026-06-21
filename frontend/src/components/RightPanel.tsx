@@ -35,7 +35,7 @@ export default function RightPanel() {
   return (
     <div className="h-full w-full flex flex-col p-8 bg-[#1c1b1a]">
       {/* Navigation Buttons */}
-      <div className="flex gap-4 mb-8 border-b border-[#3d3b38] pb-4">
+      <div className="flex flex-wrap gap-4 mb-8 border-b border-[#3d3b38] pb-4">
         <button
           onClick={() => setActiveTab("home")}
           className={`px-6 py-2 rounded-xl font-bold transition-all duration-300 ${

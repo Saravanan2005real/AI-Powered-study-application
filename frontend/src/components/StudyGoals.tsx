@@ -5,7 +5,7 @@ import { useAppContext } from "@/context/AppContext";
 import { CheckCircle, Circle, Target, Plus } from "lucide-react";
 
 export default function StudyGoals() {
-  const { goals, addGoal, toggleGoal } = useAppContext();
+  const { goals, addGoal, toggleGoal, setIsMobileMenuOpen } = useAppContext();
   const [newGoal, setNewGoal] = useState("");
 
   const handleAdd = (e: React.FormEvent) => {
@@ -20,7 +20,15 @@ export default function StudyGoals() {
     <div className="flex-1 overflow-y-auto px-4 py-8 animate-fade-in bg-background">
       <div className="max-w-4xl mx-auto flex flex-col space-y-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 bg-primary-400/20 text-primary-400 rounded-2xl flex items-center justify-center shadow-sm border border-primary-400/30">
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden p-2 -ml-2 text-foreground-muted hover:bg-[#3d3b38] rounded-lg transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="hidden sm:flex w-12 h-12 bg-primary-400/20 text-primary-400 rounded-2xl items-center justify-center shadow-sm border border-primary-400/30">
             <Target className="w-6 h-6" />
           </div>
           <div>

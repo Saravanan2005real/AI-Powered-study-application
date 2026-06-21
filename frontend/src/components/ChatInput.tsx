@@ -134,8 +134,8 @@ export default function ChatInput() {
             </span>
           </button>
           
-          <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 text-sm text-foreground-muted cursor-pointer group">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <label className="flex items-center gap-2 text-sm text-foreground-muted cursor-pointer group py-1">
               <div className="relative flex items-center justify-center">
                 <input 
                   type="radio" 
@@ -148,7 +148,7 @@ export default function ChatInput() {
               </div>
               <span className="group-hover:text-foreground transition-colors">Text Answer</span>
             </label>
-            <label className="flex items-center gap-2 text-sm text-foreground-muted cursor-pointer group">
+            <label className="flex items-center gap-2 text-sm text-foreground-muted cursor-pointer group py-1">
               <div className="relative flex items-center justify-center">
                 <input 
                   type="radio" 

@@ -18,7 +18,7 @@ import PracticeTest from "@/components/PracticeTest";
 import SettingsPanel from "@/components/SettingsPanel";
 
 export default function Home() {
-  const { studentData, setStudentData, activeView, chats, activeChatId, addMessage, setActiveView, isUploaded, isLoaded } = useAppContext();
+  const { studentData, setStudentData, activeView, chats, activeChatId, addMessage, setActiveView, isUploaded, isLoaded, setIsMobileMenuOpen } = useAppContext();
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -98,7 +98,10 @@ export default function Home() {
         <header className="flex-shrink-0 border-b border-[#3d3b38] bg-[#2D2C2A]/80 backdrop-blur-md px-6 py-4 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center justify-between mx-auto">
             <div className="flex items-center gap-4">
-              <button className="md:hidden p-2 -ml-2 text-foreground-muted hover:bg-[#3d3b38] rounded-lg transition-colors">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 -ml-2 text-foreground-muted hover:bg-[#3d3b38] rounded-lg transition-colors"
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -147,15 +150,13 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden selection:bg-primary-400/30 selection:text-primary-400">
-      <div className="hidden md:block w-64 flex-shrink-0 border-r border-[#3d3b38]">
-        <Sidebar />
-      </div>
+      <Sidebar />
 
-      <div className="flex-1 flex flex-col md:flex-row h-full max-w-full overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row h-full max-w-full overflow-hidden">
         {renderActiveView()}
         
         {/* Right Side: Document Viewer */}
-        <div className="hidden lg:block lg:w-1/4 xl:w-1/4 flex-shrink-0 h-full border-l border-[#3d3b38]">
+        <div className="w-full h-[40vh] lg:h-full lg:w-1/4 xl:w-1/4 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-[#3d3b38]">
           <DocumentViewer />
         </div>
       </div>

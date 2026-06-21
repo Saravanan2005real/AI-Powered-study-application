@@ -36,11 +36,13 @@ export default function DocumentViewer() {
         singleFormData.append("chatId", activeChatId);
         
         try {
+          console.log(`[UPLOAD START] Uploading file: ${file.name} to ${API_URL}/api/materials`);
           const response = await axios.post(`${API_URL}/api/materials`, singleFormData, {
             headers: { "Content-Type": "multipart/form-data" }
           });
           
           if (response.data) {
+            console.log(`[UPLOAD SUCCESS] File uploaded successfully:`, response.data);
             successfulUploads.push({
               name: response.data.fileName || file.name,
               type: response.data.mimeType || file.type,
@@ -50,12 +52,22 @@ export default function DocumentViewer() {
             });
           }
         } catch (fileErr: any) {
-          console.error("Failed to upload single file:", file.name, fileErr);
+          console.error("[UPLOAD ERROR] Failed to upload single file:", file.name, fileErr);
+          
+          let errorMessage = "Upload failed";
+          if (fileErr.response?.data?.error) {
+            errorMessage = fileErr.response.data.error;
+          } else if (fileErr.message === "Network Error" || fileErr.code === "ERR_NETWORK") {
+            errorMessage = "Failed to connect to the server. Please check your network connection.";
+          } else {
+            errorMessage = fileErr.message || "An unexpected error occurred during upload.";
+          }
+          
           successfulUploads.push({
             name: file.name,
             type: file.type,
             size: file.size,
-            error: fileErr.response?.data?.error || "Upload failed"
+            error: errorMessage
           });
         }
       }

@@ -11,7 +11,7 @@ type Question = {
 };
 
 export default function PracticeTest() {
-  const { studentData, addCompletedTest } = useAppContext();
+  const { studentData, addCompletedTest, setIsMobileMenuOpen } = useAppContext();
   const [testState, setTestState] = useState<"start" | "loading" | "in_progress" | "results" | "error">("start");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -66,7 +66,17 @@ export default function PracticeTest() {
   return (
     <div className="flex-1 h-full bg-[#1c1b1a] overflow-y-auto custom-scrollbar p-8 animate-fade-in relative">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-foreground mb-8">Practice Test</h2>
+        <div className="flex items-center gap-4 mb-8">
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden p-2 -ml-2 text-foreground-muted hover:bg-[#3d3b38] rounded-lg transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h2 className="text-2xl font-bold text-foreground">Practice Test</h2>
+        </div>
         
         {testState === "start" && (
           <div className="luxury-card p-8 flex flex-col items-center justify-center text-center py-16">

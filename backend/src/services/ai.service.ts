@@ -80,15 +80,17 @@ export class AIService {
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemContent },
-          ...messages.map(m => {
-            let validRole = m.role?.toLowerCase() || 'user';
-            if (['ai', 'bot', 'assistant', 'pdf', 'document'].includes(validRole)) {
-              validRole = 'assistant';
-            } else if (validRole !== 'system' && validRole !== 'user') {
-              validRole = 'user';
-            }
-            return { role: validRole as any, content: m.content || "" };
-          }),
+          ...messages
+            .map(m => {
+              let validRole = m.role?.toLowerCase() || 'user';
+              if (['ai', 'bot', 'assistant', 'pdf', 'document'].includes(validRole)) {
+                validRole = 'assistant';
+              }
+              return { role: validRole, content: m.content };
+            })
+            .filter(m => ['system', 'user', 'assistant'].includes(m.role))
+            .filter(m => m.content && String(m.content).trim() !== '')
+            .map(m => ({ role: m.role as "system" | "user" | "assistant", content: String(m.content) })),
           { role: 'user', content: userMessage }
         ],
       });
@@ -108,5 +110,74 @@ export class AIService {
     memoryDb.messages.push(aiMessage);
 
     return aiMessage;
+  }
+
+  static async generatePersonalizedTest(context: any) {
+    const { materials = [], messages = [], goals = [], subject, goal } = context;
+
+    let systemContent = `You are EduGenie, an educational AI assistant.
+Your task is to generate a personalized practice test based strictly on the provided context.
+You MUST generate a maximum of 10 questions. Do NOT generate generic or random questions.
+The test must contain a mix of question types:
+- "mcq": Multiple Choice Question (requires "options")
+- "true_false": True or False question (requires "options": ["True", "False"])
+- "fill_blank": Fill in the Blanks question
+- "short_answer": Short Answer question
+
+Respond ONLY with a raw JSON array. Do not wrap it in markdown block quotes. The array must contain objects with the following schema:
+[
+  {
+    "type": "mcq", // or "true_false", "fill_blank", "short_answer"
+    "question": "The question text",
+    "options": ["Option A", "Option B", "Option C", "Option D"], // Only include for mcq and true_false
+    "correctAnswer": 0, // For mcq/true_false, index of the correct option
+    "correctText": "The correct text", // For fill_blank and short_answer
+    "explanation": "Brief explanation of why the answer is correct",
+    "topicName": "The specific topic this question relates to"
+  }
+]`;
+
+    let contextData = "";
+    if (goals.length > 0) {
+      contextData += `\n\nStudy Goals:\n${goals.map((g: any) => `- ${g.title} (Completed: ${g.completed})`).join("\n")}`;
+    }
+    if (messages.length > 0) {
+      contextData += `\n\nRecent Chat Context:\n${messages.map((m: any) => `${m.role}: ${m.content}`).join("\n")}`;
+    }
+    if (materials.length > 0) {
+      contextData += `\n\nUploaded Materials Context:\n${materials.map((m: any) => `--- Document: ${m.fileName} ---\n${m.content || "No content extracted"}\n---`).join("\n\n")}`;
+    }
+
+    if (!contextData.trim()) {
+      contextData = `Subject: ${subject}\nGoal: ${goal}\nPlease generate questions based on this subject and goal.`;
+    } else {
+      contextData = `Context Information:\n${contextData}\n\nPlease generate up to 10 questions covering the topics discussed in the above context. Prioritize uploaded materials and chat history.`;
+    }
+
+    try {
+      const groq = getGroqClient();
+      const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemContent },
+          { role: 'user', content: contextData }
+        ],
+        temperature: 0.5, // slightly lower for structured output
+        max_tokens: 3000,
+      });
+
+      const aiText = response.choices[0]?.message?.content || '[]';
+      
+      try {
+        const jsonMatch = aiText.match(/\[[\s\S]*\]/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : aiText;
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.error("Failed to parse AI test response:", aiText);
+        throw new Error("AI returned malformed test data.");
+      }
+    } catch (error: any) {
+      handleGroqError(error);
+    }
   }
 }

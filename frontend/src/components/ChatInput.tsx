@@ -83,7 +83,7 @@ export default function ChatInput() {
     if (!input.trim() || isGenerating) return;
     
     const userText = input.trim();
-    addMessage(userText, "user");
+    const resolvedChatId = addMessage(userText, "user");
     setInput("");
     setIsGenerating(true);
 
@@ -93,8 +93,10 @@ export default function ChatInput() {
       const goalPrefix = studentData?.goal ? `My study goal is ${studentData.goal}. ` : "";
       const fullMessage = `${contextPrefix}${goalPrefix}${userText}`;
       
-      const aiResponse = await AIService.sendMessage(fullMessage, activeChatId);
+      const aiResponse = await AIService.sendMessage(fullMessage, resolvedChatId);
       if (aiResponse) {
+        // We have to wait for state to update, but addMessage is safe because we use the context. 
+        // Wait, addMessage creates it locally.
         addMessage(aiResponse, "ai");
         if (answerType === "audio") {
           speak(aiResponse);

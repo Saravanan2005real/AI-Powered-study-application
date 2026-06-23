@@ -1,11 +1,44 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
-import { BarChart2, Clock, CheckCircle } from "lucide-react";
+import { BarChart2, Clock, CheckCircle, Target, Award, AlertCircle } from "lucide-react";
+import axios from "axios";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export default function ProgressTracker() {
-  const { studyHours, completedTests, goals, setIsMobileMenuOpen } = useAppContext();
+  const { goals, setIsMobileMenuOpen, studyHours: localStudyHours, completedTests: localCompletedTests } = useAppContext();
+  
+  const [stats, setStats] = useState({
+    studyHours: localStudyHours,
+    completedTests: localCompletedTests,
+    topicsMastered: [] as string[],
+    weakTopics: [] as string[]
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/progress`);
+        if (response.data) {
+          setStats({
+            studyHours: response.data.studyHours || localStudyHours,
+            completedTests: response.data.completedTests || localCompletedTests,
+            topicsMastered: response.data.topicsMastered || [],
+            weakTopics: response.data.weakTopics || []
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch progress from backend", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProgress();
+  }, [localStudyHours, localCompletedTests]); // Re-fetch if local state changes
+
   const completedGoals = goals.filter(g => g.completed).length;
   const totalGoals = goals.length;
   const goalProgress = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
@@ -34,18 +67,20 @@ export default function ProgressTracker() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="luxury-card p-6 border-t-4 border-t-primary-400 flex flex-col items-center text-center">
             <Clock className="w-8 h-8 text-primary-400 mb-4" />
-            <h3 className="text-xl font-bold text-foreground mb-1">{studyHours} Hours</h3>
+            <h3 className="text-xl font-bold text-foreground mb-1">
+              {stats.studyHours.toFixed(1)} Hours
+            </h3>
             <p className="text-sm text-foreground-muted">Total Study Time</p>
           </div>
 
           <div className="luxury-card p-6 border-t-4 border-t-[#D4AF37] flex flex-col items-center text-center">
             <CheckCircle className="w-8 h-8 text-[#D4AF37] mb-4" />
-            <h3 className="text-xl font-bold text-foreground mb-1">{completedTests} Tests</h3>
+            <h3 className="text-xl font-bold text-foreground mb-1">{stats.completedTests} Tests</h3>
             <p className="text-sm text-foreground-muted">Completed Practice Tests</p>
           </div>
 
           <div className="luxury-card p-6 border-t-4 border-t-[#8B7355] flex flex-col items-center text-center">
-            <BarChart2 className="w-8 h-8 text-[#8B7355] mb-4" />
+            <Target className="w-8 h-8 text-[#8B7355] mb-4" />
             <h3 className="text-xl font-bold text-foreground mb-1">{completedGoals} / {totalGoals}</h3>
             <p className="text-sm text-foreground-muted">Goals Achieved</p>
           </div>
@@ -70,6 +105,47 @@ export default function ProgressTracker() {
                 : "You've got this! Start working on your goals to see this bar fill up."}
           </p>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="luxury-card p-6 border-t-4 border-t-green-500">
+            <div className="flex items-center gap-3 mb-6">
+              <Award className="w-6 h-6 text-green-500" />
+              <h3 className="text-xl font-bold text-foreground">Topics Mastered</h3>
+            </div>
+            {stats.topicsMastered.length > 0 ? (
+              <ul className="space-y-3">
+                {stats.topicsMastered.map((topic, i) => (
+                  <li key={i} className="flex items-center gap-3 text-foreground bg-[#2D2C2A]/50 p-3 rounded-lg border border-green-500/20">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>{topic}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-foreground-muted text-center py-4 bg-[#1c1b1a] rounded-lg border border-[#3d3b38]">Take more practice tests to master topics!</p>
+            )}
+          </div>
+
+          <div className="luxury-card p-6 border-t-4 border-t-red-500">
+            <div className="flex items-center gap-3 mb-6">
+              <AlertCircle className="w-6 h-6 text-red-500" />
+              <h3 className="text-xl font-bold text-foreground">Needs Review</h3>
+            </div>
+            {stats.weakTopics.length > 0 ? (
+              <ul className="space-y-3">
+                {stats.weakTopics.map((topic, i) => (
+                  <li key={i} className="flex items-center gap-3 text-foreground bg-[#2D2C2A]/50 p-3 rounded-lg border border-red-500/20">
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                    <span>{topic}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-foreground-muted text-center py-4 bg-[#1c1b1a] rounded-lg border border-[#3d3b38]">No weak topics identified yet. Keep it up!</p>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -9,53 +9,49 @@ const getUserId = () => "user-1";
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     console.log(`\n[Chat API] --- New Request Received ---`);
-    console.log(`[Chat API] Body:`, JSON.stringify(req.body, null, 2));
+    console.log(`[Chat API] Request Payload:`, JSON.stringify(req.body, null, 2));
     
     const { message, chatId } = req.body;
     
-    if (!message || typeof message !== 'string') {
-      console.warn(`[Chat API] Validation failed: 'message' string is required.`);
-      res.status(400).json({ error: "Invalid request. 'message' string is required." });
+    console.log(`[Chat API] Incoming message: "${message}"`);
+    console.log(`[Chat API] Incoming chatId: "${chatId}"`);
+
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.warn(`[Chat API] Validation failed: 'message' cannot be empty.`);
+      res.status(400).json({ error: "Validation failed: 'message' cannot be empty." });
       return;
     }
 
-    if (chatId && typeof chatId !== 'string') {
-      console.warn(`[Chat API] Validation failed: 'chatId' must be a string if provided.`);
-      res.status(400).json({ error: "Invalid request. 'chatId' must be a string." });
+    if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') {
+      console.warn(`[Chat API] Validation failed: 'chatId' is required.`);
+      res.status(400).json({ error: "Validation failed: 'chatId' is required." });
       return;
     }
 
     const userId = getUserId();
-    console.log(`[Chat API] Processing for userId: ${userId}, chatId: ${chatId || 'None'}`);
+    console.log(`[Chat API] Processing for userId: ${userId}, chatId: ${chatId}`);
 
-    if (chatId) {
-      let chat = memoryDb.chatSessions.find(c => c.id === chatId && c.userId === userId);
-      if (!chat) {
-        console.log(`[Chat API] Chat ${chatId} not found in DB. Creating new session.`);
-        chat = await ChatService.createChat(userId, "New Session", chatId);
-      }
+    let chat = memoryDb.chatSessions.find(c => c.id === chatId && c.userId === userId);
+    if (!chat) {
+      console.log(`[Chat API] Chat session ${chatId} does not exist. Creating new chat.`);
+      const title = message.substring(0, 20) + (message.length > 20 ? '...' : '');
+      chat = await ChatService.createChat(userId, title, chatId);
+    }
 
-      console.log(`[Chat API] Adding message to chat ${chatId}...`);
+    console.log(`[Chat API] Adding message to chat ${chatId}...`);
+    try {
       const response = await ChatService.addMessage(userId, chatId, message);
       console.log(`[Chat API] Successfully added message. Returning AI response.`);
       res.json({ content: response.aiMessage.content });
-    } else {
-      console.log(`[Chat API] No chatId provided. Processing as stateless message.`);
-      let content = "";
-      try {
-        content = await AIService.chat(message) as string;
-        console.log(`[Chat API] Stateless message successful. Returning response.`);
-      } catch (error: any) {
-        console.error("[Chat API] Stateless AI generation failed:", error.message);
-        content = `Sorry, I encountered an error while processing your request: ${error.message}`;
-      }
-      res.json({ content });
+    } catch (err: any) {
+      console.error(`[Chat API] ChatService.addMessage failed:`, err);
+      res.status(500).json({ error: err.message || "Failed to process chat message." });
     }
   } catch (error: any) {
-    console.error("\n[Chat API] FATAL ERROR:", error);
+    console.error("\n[Chat API] FATAL ERROR:");
+    console.error("Stack trace:", error.stack);
     res.status(500).json({ 
-      error: error.message || "An unexpected internal server error occurred while processing the chat.",
-      details: error.stack ? error.stack.split('\n').slice(0, 3) : undefined
+      error: error.message || "An unexpected internal server error occurred while processing the chat."
     });
   }
 });

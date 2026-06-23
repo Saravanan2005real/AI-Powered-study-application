@@ -47,7 +47,7 @@ export type AppContextType = {
   activeChatId: string | null;
   createNewChat: () => void;
   setActiveChatId: (id: string) => void;
-  addMessage: (content: string, role: "user" | "ai") => void;
+  addMessage: (content: string, role: "user" | "ai") => string;
 
   goals: Goal[];
   addGoal: (title: string) => void;
@@ -210,7 +210,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addMessage = (content: string, role: "user" | "ai") => {
-    if (!activeChatId) {
+    let currentId = activeChatId;
+    if (!currentId) {
       // Create chat if none exists
       const newChat: ChatSession = {
         id: Date.now().toString(),
@@ -221,9 +222,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
+      currentId = newChat.id;
     } else {
       setChats(prev => prev.map(chat => {
-        if (chat.id === activeChatId) {
+        if (chat.id === currentId) {
           const updatedChat = {
             ...chat,
             messages: [...chat.messages, { id: Date.now().toString() + role, role, content }],
@@ -237,6 +239,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return chat;
       }));
     }
+    return currentId;
   };
 
   const addGoal = (title: string) => {

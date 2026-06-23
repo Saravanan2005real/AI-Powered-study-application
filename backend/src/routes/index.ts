@@ -3,7 +3,7 @@ import { getChats, createChat, getChatById, addMessage } from '../controllers/ch
 import { getGoals, createGoal, updateGoal } from '../controllers/goal.controller';
 import { getProgress, updateProgress } from '../controllers/progress.controller';
 import { getSettings, updateSettings, clearHistory } from '../controllers/settings.controller';
-import { getTests, createTest, evaluateTest } from '../controllers/test.controller';
+import { getTests, createTest, evaluateTest, generatePersonalizedTest } from '../controllers/test.controller';
 import { getMaterials, createMaterial, upload } from '../controllers/material.controller';
 import chatRoute from './chat';
 
@@ -39,6 +39,7 @@ router.delete('/settings', clearHistory);
 // Tests
 router.get('/tests', getTests);
 router.post('/tests', createTest);
+router.post('/tests/generate', generatePersonalizedTest);
 router.post('/tests/:id/evaluate', evaluateTest);
 
 // Materials

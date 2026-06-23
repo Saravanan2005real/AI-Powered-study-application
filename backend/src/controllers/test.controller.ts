@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TestService } from '../services/test.service';
+import { AIService } from '../services/ai.service';
 
 const getUserId = () => "user-1";
 
@@ -19,14 +20,31 @@ export const createTest = async (req: Request, res: Response) => {
 
     const testRecord = await TestService.createTest(userId, req.body);
     
-    // Mock questions since AIService generatePracticeTest is not implemented
-    const questions = [
-      { id: 1, text: `Sample question for ${testRecord.subject}`, options: ['A', 'B', 'C', 'D'], answer: 'A' }
-    ];
+    res.json({ testId: testRecord.id });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create test" });
+  }
+};
 
+export const generatePersonalizedTest = async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId();
+    const context = req.body.context || {};
+    
+    // We can also create the test record here so we can save it.
+    const testRecord = await TestService.createTest(userId, { 
+      subject: context.subject || "General", 
+      chapter: "Mixed", 
+      questionsCount: 10, 
+      difficulty: "Medium" 
+    });
+
+    const questions = await AIService.generatePersonalizedTest(context);
+    
     res.json({ testId: testRecord.id, questions });
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate test" });
+    console.error("Generate Test Error:", error);
+    res.status(500).json({ error: "Failed to generate personalized test" });
   }
 };
 

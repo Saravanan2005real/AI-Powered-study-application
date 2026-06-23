@@ -24,30 +24,21 @@ export class AIService {
     }
   }
 
-  static async generatePracticeTest(subject: string, goal: string) {
-    const prompt = `Generate a 3-question multiple choice practice test for a student studying "${subject}" with the goal to "${goal}". 
-Return ONLY a valid JSON array of objects with the exact following structure:
-[
-  {
-    "question": "Question text here",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": 0
-  }
-]
-No markdown wrapping, no explanation, just the raw JSON array.`;
-
+  static async generatePracticeTest(context: any) {
     try {
-      const result = await this.sendMessage(prompt);
+      console.log("Generating personalized test via backend API...");
+      const response = await axios.post(`${API_URL}/api/tests/generate`, {
+        context
+      }, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 60000 // Higher timeout for AI generation
+      });
       
-      try {
-        const jsonMatch = result.match(/\[[\s\S]*\]/);
-        const jsonStr = jsonMatch ? jsonMatch[0] : result;
-        return JSON.parse(jsonStr);
-      } catch (e) {
-        throw new Error("AI returned malformed test data.");
-      }
+      // Expected response: { testId: string, questions: any[] }
+      return response.data;
     } catch (error: any) {
-      throw error;
+      console.error("Test Generation Error:", error);
+      throw new Error(error.response?.data?.error || error.message || "Failed to generate test.");
     }
   }
 }
